@@ -20,6 +20,30 @@ def moveAndClick(img, confidence=0.8):
   time.sleep(1)
   return True
 
+def dragTo(img1, img2):
+  location = list(pyautogui.locateAllOnScreen(img1, grayscale=True, confidence=0.65))
+  if not location:
+    return False
+
+  left, top, width, height = location[-1]
+
+  x = left + random.randint(0, width)
+  y = top + random.randint(0, height)
+
+  location = list(pyautogui.locateAllOnScreen(img2, grayscale=True, confidence=0.65))
+  if not location:
+    return False
+
+  left, top, width, height = location[-1]
+
+  moveX = left + random.randint(0, width)
+  moveY = top + random.randint(0, height)
+
+  pyautogui.moveTo(x, y, random.uniform(0.05, 0.2))
+  pyautogui.dragTo(moveX, moveY, duration=0.5, button='left')
+
+  return True
+
 def moveAndClickCustom(img, randW, randH, confidence=0.8):
   location = list(pyautogui.locateAllOnScreen(img, grayscale=True, confidence=confidence))
   if not location:
@@ -44,6 +68,10 @@ def whereAmI():
     'sign': 'img/sign_chrome.png',
     # 角色頁
     'character': 'img/character.png',
+    # 角色頁
+    'character': 'img/character_202202.png',
+    # 角色頁 (new year)
+    'character': 'img/character_new_year.png',
     # 錯誤
     'error': 'img/error.png',
     # new map
@@ -57,7 +85,7 @@ def whereAmI():
   # 是否在地圖頁
   # 是否在遊戲中
   for key, value in d.items():
-    location = pyautogui.locateOnScreen(value, grayscale=True, confidence=0.8)
+    location = pyautogui.locateOnScreen(value, grayscale=True, confidence=0.65)
     if (location is not None):
       print("found " + key)
       return key
@@ -78,20 +106,22 @@ def inMapSelectHero():
 # 叫起來工作
 def work():
   if whereAmI() != 'character':
+    print(whereAmI())
     return False
 
-  pyautogui.moveTo(570 + random.randint(100, 350), 420 + random.randint(100, 250), random.uniform(0.2, 0.4))
   for i in range(0, 6):
-    x = 570 + random.randint(200, 350)
-    y = 420 + random.randint(200, 250)
-    moveX = x - random.randint(-20, 20)
-    moveY = 420 + random.randint(0, 50)
-    pyautogui.moveTo(x, y, random.uniform(0.05, 0.2))
-    pyautogui.dragTo(moveX, moveY, duration=0.5, button='left')
+    if dragTo('img/avatar_sidebar.png', 'img/character.png'):
+      continue
+    elif dragTo('img/avatar_sidebar.png', 'img/character_202202.png'):
+      continue
+
+  count=0
+  while moveAndClickCustom('img/not_work.png', 40, 10) == True and count <= 200:
+    count+=1
     time.sleep(0.1)
-  
-  while moveAndClickCustom('img/not_work.png', 40, 10) == True:
-    time.sleep(0.1)
+
+  if count >= 200:
+    forceReload()
 
   moveAndClick('img/close.png')
 
@@ -129,11 +159,14 @@ def back():
   
   return True
 
-printSleep("即將開始執行", 5)
+printSleep("即將開始執行", 3)
 
+count=0
 
 while True:
+
   where=whereAmI()
+  print('here ' + where)
   # 登入
   if (where == 'login'):
     print("[登入頁]")
@@ -155,15 +188,15 @@ while True:
       forceReload()
     moveAndClick('img/map.png')
 
-  count=0
   # 遊戲中等待  
   while where == 'game':
     print("[遊戲頁]")
-    if (count == 10):
-      inMapSelectHero()
+    if (count >= 30):
+      moveAndClick('img/backpage.png')
       count=0
+      break
 
-    printSleep("休息中", random.randint(80, 120))
+    printSleep("[" + str(count) + "] 休息中", random.randint(60-20, 60+20))
     back()
     count+=1
 
@@ -187,4 +220,4 @@ while True:
     print('[換新地圖]')
     moveAndClick('img/new_map.png')
 
-  printSleep("等待", 10)
+  printSleep("等待", 25)
